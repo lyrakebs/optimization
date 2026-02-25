@@ -1,32 +1,24 @@
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Токен для авторизации
-const SECRET_TOKEN = "my_super_secret_token";
-const FILE_PATH = path.join(__dirname, 'secret_file', 'myfile.dat');
+// Токен для скачивания
+const TOKEN = "e2f1c3b9-7d44-4a2f-bb5a-9d1c2f7e5a12";
 
+// Маршрут скачивания
 app.get('/download', (req, res) => {
-    const authHeader = req.headers['authorization'];
-
-    if (!authHeader || authHeader !== `Bearer ${SECRET_TOKEN}`) {
+    const auth = req.headers['authorization'];
+    if (!auth || auth !== `Bearer ${TOKEN}`) {
         return res.status(401).send('Unauthorized');
     }
 
-    if (!fs.existsSync(FILE_PATH)) {
-        return res.status(404).send('File not found');
-    }
+    const filePath = path.join(__dirname, 'optimization.bat');
+    if (!fs.existsSync(filePath)) return res.status(404).send('File not found');
 
-    // Отдаём файл через поток
-    const fileStream = fs.createReadStream(FILE_PATH);
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Disposition', 'attachment; filename="myfile.dat"');
-    fileStream.pipe(res);
+    res.download(filePath); // потоковое скачивание
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
